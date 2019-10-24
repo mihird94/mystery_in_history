@@ -26,8 +26,8 @@ which one was the real author.
 **In This project, I will try to find out who actually wrote the disputed essays. Please read the markdown for a detailed project report.
 
 Approach Used:-
--K-means Clustering
--Decison Tree Analysis 
+1. K-means Clustering
+2. Decison Tree Analysis 
 
 *Using Clustering Approaches:-
 
