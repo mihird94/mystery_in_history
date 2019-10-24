@@ -1,6 +1,6 @@
 # mystery_in_history
 
-**A Computational appraoch to solve a age old problem for historians
+**A Computational appraoch to solve a age old problem for historians**
 
 *About the Federalist Papers
 
@@ -23,7 +23,7 @@ or Madison”. These are the famous essays with disputed authorship. Hamilton wr
 before he was killed in a duel. Later Madison also claimed authorship. Historians were trying to find out
 which one was the real author.
 
-**In This project, I will try to find out who actually wrote the disputed essays. Please read the markdown for a detailed project report.
+**In This project, I will try to find out who actually wrote the disputed essays. Please read the markdown for a detailed project report.**
 
 Approach Used:-
 1. K-means Clustering
@@ -47,7 +47,7 @@ Here is the tree:-
 ![alt text](https://github.com/mihird94/mystery_in_history/blob/master/decison_tree.PNG)
 
 
-**Mystery Solved!! Disputed Essays were written my Madison
+**Mystery Solved!! Disputed Essays were written my Madison**
 
 
 
