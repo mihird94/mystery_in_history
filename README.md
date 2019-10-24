@@ -2,7 +2,7 @@
 
 **A Computational appraoch to solve a age old problem for historians**
 
-*About the Federalist Papers
+*About the Federalist Papers*
 
 Quote from the Library of Congress http://www.loc.gov/rr/program/bib/ourdocs/federalist.html
 The Federalist Papers were a series of eighty-five essays urging the citizens of New York to ratify the new
@@ -13,7 +13,7 @@ the printer Jacob Gideon that the authors of each essay were identified by name.
 considered one of the most important sources for interpreting and understanding the original intent of the
 Constitution.
 
-*About the disputed authorship
+*About the disputed authorship*
 
 The original essays can be downloaded from the Library of Congress. http://thomas.loc.gov/home/histdox/
 fedpapers.html
@@ -29,20 +29,20 @@ Approach Used:-
 1. K-means Clustering
 2. Decison Tree Analysis 
 
-*Using Clustering Approaches:-
+*Using Clustering Approaches:-*
 
-*Here is the cluster-plot for K-mean:-
+*Here is the cluster-plot for K-mean:-*
 
 ![alt text](https://github.com/mihird94/mystery_in_history/blob/master/k-means.PNG)
 
-*Here is the Hierachical Clustering Dendogram:-
+*Here is the Hierachical Clustering Dendogram:-*
 
 ![alt text](https://github.com/mihird94/mystery_in_history/blob/master/hierarchical_clust.PNG)
 
 
-*Using Decision Tree Classifier:-
+*Using Decision Tree Classifier:-*
 
-Here is the tree:-
+Here is the tree:-*
 
 ![alt text](https://github.com/mihird94/mystery_in_history/blob/master/decison_tree.PNG)
 
