@@ -1,0 +1,331 @@
+---
+title: <span style="color:blue">IST 707 HW2</span>
+author: <span style="color:blue"> Mihir</span>
+date: "February 26, 2019"
+output: html_document
+---
+#### This Home work assignment deals with using clustering and decison tree techniques to find conclusive evidence to the disputed essay mystery between Hamilton and Madison. Steps Involved in the process:-####
+
+##Clustering
+1.Using clustering to identity differnt author clusters based on word frequency features
+ -Data Cleaning and Standardization- Check for missing values and treat with present. As the clustering techniques use the distance function, features with different ranges can affect the calculation of distances. Scaling is done to take care of that issue.
+ 
+2. Using Kmeans method- Try to find out the optimal number of K using the elbow method which tracks the gradient of change for within sum of squares for diffrent iterations of k. It is quite intuitiuve in this problem as the we need two major clusters, one for Hamilton and other for Madison to find out where the disputed essays lie.But for situations where the numbers of clusters is not clear, we can use the elbow method to get to optimal number of clusters. Nonetheless, we wil use the elbow method to reaffirm our choice of k=2.
+
+3. Using Hierarchical clustering(HAC)- We will use this method to reassure ourselves of the results we achieved form K-means clustering.
+
+##Decison Tree Analysis
+1. Using Decisionn tree analysis to build a model that describes the disputed essays problem
+
+2. Using default settings and get an initial model
+
+3. Tuning the model based on various tuning parameters
+
+4. Plotting the tree
+
+5. Interpreting the model to solve the disputed essays mystery
+
+
+**Load Required Packages:-**
+```{r}
+library(caret)
+library(rpart)
+library(factoextra)
+library(rattle)
+
+```
+
+**Loading the Dataset for clustering:-**
+```{r}
+essayDf<-read.csv('Disputed_Essay_Data.csv')
+```
+
+**Data preparation:-**
+```{r}
+essayDf[,-c(1,2)]<-scale(essayDf[,-c(1,2)])
+essayDf<-essayDf[-which(essayDf$author=='Jay'),]
+essayDf<-essayDf[-which(essayDf$author=='HM'),]
+essayDf$author<-as.character(essayDf$author)
+essayDf$author<-as.factor(essayDf$author)
+
+```
+
+
+-Levels of Jay and HM in author feature are removed as there is no dispute there. 
+
+-Intersting levels for clustering are Madison, Hamilton and dispt as they will help me solve the problem.
+
+-Tried clustering with all levels, but the results are not that interpretable in that. Hence, decided to drop levels unnecessary in terms of the analysis questions.
+
+**Get the combination of author and filename as a unique rowname to help in visualizing the clusters:-**
+
+```{r}
+essayDf$author_unique<-paste(essayDf$author,stringr::str_extract(essayDf$filename,"\\d+"),sep="_")
+rownames(essayDf)<-essayDf$author_unique
+```
+
+``` This is done by using the paste function to concatenate the author name and using the stringr to extract the numeric part of the filename to make a unique identifier that has the author's name.```
+
+**Using the Elbow method to determine the optimal number of clusters(k):-**
+
+```{r}
+wss <- function(k){
+  return(kmeans(essayDf[,-c(1,2,73)], k, nstart = 25)$tot.withinss)
+}
+
+k_values <- 1:10
+
+wss_values <- purrr::map_dbl(k_values, wss)
+
+
+plot(x = k_values, y = wss_values, 
+     type = "b", frame = F,
+     xlab = "Number of clusters K",
+     ylab = "Total within-clusters sum of square")
+
+```
+
+``` The sharpest change of gradient is visible at k=2 hence reaffirming our intuition to choose k=2```
+
+*We will Cross-check this by taking the difference of wss at these points:-*
+```{r}
+(wss_values[1]-wss_values[2])>(wss_values[2]-wss_values[3])
+```
+
+```Optimal K for this dataset is 2```
+
+**Building the clustering model:-**
+
+```{r}
+set.seed(1)
+kmCluster<-kmeans(essayDf[,-c(1,2,73)],centers = 2, nstart = 30, iter.max = 50)
+```
+
+``` We skip the columns 1,2 and 73 as they ae not numeric```
+
+**Visualizing the clusters:-**
+
+```{r}
+fviz_cluster(kmCluster, data = essayDf[,-c(1,2,73)])
+```
+
+1.We can see that the cluster 1 has the Madison essays and cluster 2 has the Hamilton essays.
+2.Interestingly,by visual inspection,the disputed essays lie in the Madison cluster. We can analyse this further by printing a table.
+
+```{r}
+essayDf$cluster<-kmCluster$cluster
+table(essayDf$author,essayDf$cluster)
+```
+
+```From the table it is clear that all the disputed values lie in the Madison Cluster.```
+```Therfore it is possible to conclude based on K-means method that the disputed essays were written by Madison```
+
+**Hierarchical clustering**
+
+
+```{r}
+HACcluster<-hac_output <- hclust(dist(essayDf[,-c(1,2,73)], method = "minkowski"), method = "complete")
+plot(HACcluster)
+
+```
+
+```{r}
+hac_cut <- cutree(HACcluster, 2)
+essayDf$hcluster<-hac_cut
+table(essayDf$author,essayDf$hcluster)
+```
+
+-We see that some outliers are distorting our clusters.
+
+-Outliers were identified and removed.
+
+*Hierrachical Clustering after removing outliers*
+
+1.We will use the minkowski disatnce method and Ward.D linkage method to get the clusters. Ward.D linkage method is giving better results for this dataset.
+
+2.Ward's method minimizes total within-cluster variance and uses it as an objective function to  merge the clusters.
+
+```{r}
+HACcluster<-hac_output <- hclust(dist(essayDf[!(rownames(essayDf) %in% c("Hamilton_13","Hamilton_1","Hamilton_85")),-c(1,2,73)], method = "minkowski"), method = "ward.D")
+plot(HACcluster,xlab="")
+rect.hclust(HACcluster, k = 2, border = 2:5)
+hac_cut <- cutree(HACcluster, 2)
+essayh<-essayDf[!(rownames(essayDf) %in% c("Hamilton_13","Hamilton_1","Hamilton_85")),]
+essayh$hcluster<-hac_cut
+table(essayh$author,essayh$hcluster)
+```
+
+```We have got a result that is consistent with our kmeans cluster.We see that all of the disputed essay lie in the Madison Cluster```
+```This reaffirms our conclusion that the essays were indeed written by Madison```
+
+
+####Decison Tree Analysis###
+
+**Load the dataset again as a new object to avoid additional data cleaning:-**
+```{r}
+essayTree<-read.csv('Disputed_Essay_Data.csv')
+```
+
+**Data Preparation:-**
+
+```{r}
+essayTree<-essayTree[-which(essayTree$author=='Jay'),]
+essayTree<-essayTree[-which(essayTree$author=='HM'),]
+essayTree$author<-as.character(essayTree$author)
+essayTree$author<-as.factor(essayTree$author)
+```
+
+**Splitting the dataset into testing and training datasets:-**
+
+```{r}
+set.seed(2)
+index<-createDataPartition(essayTree$author,p=0.7,list=F)
+essayTrain<-essayTree[index,]
+essayTest<-essayTree[-index,]
+prop.table(table(essayTrain$author))
+prop.table(table(essayTest$author))
+```
+
+**Training a model using default settings:-**
+
+```{r}
+set.seed(5)
+tree<-train(author~.,data =essayTrain,metric="Accuracy",method='rpart')
+
+```
+
+**Visualize the tree with default settings:-**
+
+```{r}
+fancyRpartPlot(tree$finalModel)
+```
+
+**Predictions and Confusion Matrix on the default model:-**
+
+```{r}
+essayTest$predict_default<-predict(tree,newdata = essayTest)
+print(tree$finalModel)
+confusionMatrix(essayTest$author,essayTest$predict_default)
+```
+
+-We observe that the vanilla model of the decision tree for this dataset gives us a tree with one parent node and two leaf nodes(Hamiton and Madison.
+
+-This model makes it difficult to understand and interpret our disputed essays problem. One interesting observation is that this model predicted all disputed essays as Madison!This is interesting.
+
+
+
+**Fine Tuning the Decison tree model:-**
+
+```{r}
+set.seed(3)
+#tr_control <- trainControl(method = "cv", number = 4,classProbs = F)
+tree_tuned<-train(author~ ., 
+                  data = essayTrain,
+                  method = "rpart", 
+                  metric = "Accuracy",
+                  #trControl=tr_control,
+                  tuneLength=10,
+                  control = rpart.control(minsplit =9
+                                          ),
+                  tuneGrid = expand.grid(cp = seq(0, 1, 0.001))
+                  )
+```
+
+
+
+**Visualizing the tree with tuning**
+
+```{r}
+fancyRpartPlot(tree_tuned$finalModel)
+```
+
+**Predictions and Confusion Matrix on the tuned model:-**
+
+```{r}
+essayTest$predict_tuned<-predict(tree_tuned,newdata = essayTest)
+print(tree_tuned$finalModel)
+confusionMatrix(essayTest$author,essayTest$predict_tuned)
+```
+
+``` Now we have a tree with one root,one internal and three leaf nodes. Significant part is that one of the leaf nodes now have dispt as the value.```
+```This node is a part of the Madison subtree which reaffirms our belief that the disputed essays were written by Madison.```
+```We didn't get any improvements on the accuracy and predictions with fine tuning,but we have at least got a tree that helps us interpret the problem.```
+```The fact that all the disputed essays were misclassified as Madison also adds to our intuition that the essays were written by him```
+
+####Modelling Using Only Hamiltion and Madison####
+
+``` To predict which author wrote the disputed essays, A model that trains on just Madison and Hamilton data points can help us to predict the author of the disputed essays.We later pass on the data points of the disputed essays to get a binary prediction in terms of Hamilton or Madison```
+
+
+**Making a separate dataframe for the disputed data points and remove them from the training and testing data points**
+
+```{r}
+disputedDf<-essayTree[which(essayTree$author=='dispt'),]
+newTrain<-essayTrain[-which(essayTrain$author=='dispt'),]
+newTest<-essayTest[-which(essayTest$author=='dispt'),]
+
+```
+
+**Handling empty levels in the author attribute:-**
+
+```{r}
+
+newTrain$author<-as.character(newTrain$author)
+newTrain$author<-as.factor(newTrain$author)
+newTest$author<-as.character(newTest$author)
+newTest$author<-as.factor(newTest$author)
+```
+
+
+
+**Training a tree model**
+
+```{r}
+set.seed(3)
+tr_control <- trainControl(method = "cv", number = 3,classProbs = F)
+treeNew<-train(author~ ., 
+                  data = newTrain,
+                  method = "rpart", 
+                  metric = "Accuracy",
+                  trControl=tr_control,
+                  tuneLength=10,
+                  control = rpart.control(minsplit =9),
+                  tuneGrid = expand.grid(cp = seq(0, 1, 0.001))
+                  )
+```
+
+```3-fold Cross Validation used for training pursposes.Minsplit of 9 and tunegrid of cp from 0 to 1 at steps of 0.001 passed as parameters```
+
+
+**Predictions on the Testing data and metrics**
+
+```{r}
+fancyRpartPlot(treeNew$finalModel)
+newTest$predict<-predict(treeNew,newdata = newTest)
+print(treeNew$finalModel)
+confusionMatrix(newTest$author,newTest$predict)
+```
+
+
+1.This tree has 1 root node and 2 leaf nodes.upon>0.0035 terminates in Hamilton and the opposite in Madison.
+
+2.We Can interpret this as Hamilton uses 'upon' more than 35 times in 1000 words in his essays and Madison does not.
+
+3.Accuracy of the model is 84.21 percent and Sensitivity is 83.33 perecent (Hamilton is the positive class for consideration).
+
+4.Specificity of 1 is observed because there are no False Neagtives(No Hamilton is wrongly predicted as Madison).
+
+**Predicting Disputed and confusion matrix**
+```{r}
+disputedDf$predict<-predict(treeNew,newdata = disputedDf[,-1])
+table(disputedDf$predict)
+```
+
+1.Our Model predicts 10 out of 11 disputed cases to be written by Madison.
+
+2.This means that in purely numerical sense, The data points in the disputed essays are much closer to datapoints in the Madison essays.
+
+3.This is like the final nail in the Coffin. All our Analysis before this indicated that the essays were written by Madison and this further reaffirms our conclusion.
+
+### Madison is the Author of the Disputed Essays.Mystery Solved!###
+ 
